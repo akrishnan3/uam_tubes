@@ -32,8 +32,7 @@
 *.app
 
 #Folders
-/px4
-/px4_ros_com
+/px4*
 /build
 /install
 /log

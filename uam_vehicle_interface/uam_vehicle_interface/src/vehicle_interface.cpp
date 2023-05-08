@@ -28,6 +28,10 @@ VehicleInterface::VehicleInterface() : rclcpp::Node("vehicle_interface")
     px4_qos_pub
   );
 
+  vehicle_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(
+    "vehicle_interface/vehicle_pose",
+    10
+  );
 
   
   //------------------------ Subscriptions ------------------------
@@ -65,6 +69,8 @@ VehicleInterface::VehicleInterface() : rclcpp::Node("vehicle_interface")
     //RCLCPP_INFO(this->get_logger(), "Recieved vehicle_odometry");
     for(int i = 0; i<3; i++) current_position[i] = msg.position[i];
     for(int i=0; i<4; i++) current_quaternion[i] = msg.q[i];
+
+    publish_vehicle_pose();
   }
 
 
@@ -120,7 +126,7 @@ void VehicleInterface::arm()
 void VehicleInterface::disarm()
 {
 	publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 0.0, 0.0);
-	RCLCPP_INFO(this->get_logger(), "Diasrm command send");
+	RCLCPP_INFO(this->get_logger(), "Disarm command send");
 }
 
 
@@ -183,11 +189,11 @@ float VehicleInterface::yaw_from_quaternion(float* q)
   return atan2(2.0*(q[1]*q[2]+q[0]*q[3]),1.0- 2.0*(q[2]*q[2] + q[3]*q[3]));
 }
 
-/*
-void VehicleInterface::publish_pose()
+
+void VehicleInterface::publish_vehicle_pose()
 {
-  geometry_msgs::msg::PoseStamped msg
-  msg.header.frame_id = "map";
+  geometry_msgs::msg::PoseStamped msg;
+  msg.header.frame_id = "NED";
   msg.header.stamp = this->get_clock()->now();
   msg.pose.position.x = double(current_position[0]);
   msg.pose.position.y = double(current_position[1]);
@@ -196,8 +202,8 @@ void VehicleInterface::publish_pose()
   msg.pose.orientation.x = double(current_quaternion[1]);
   msg.pose.orientation.y = double(current_quaternion[2]);
   msg.pose.orientation.z = double(current_quaternion[3]);
+  vehicle_pose_pub_->publish(msg);
 }
-*/
 
 
 int main(int argc, char ** argv)

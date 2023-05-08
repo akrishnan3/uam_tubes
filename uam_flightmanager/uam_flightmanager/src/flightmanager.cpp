@@ -73,7 +73,7 @@ FlightManagerServer::FlightManagerServer() : rclcpp::Node("flightmanager")
     
     for(int n = 1; n < n_waypts; n++){
       double progress = 0.0;
-      double yaw = atan2(path[n].y - path[n-1].x, path[n].x - path[n-1].x);
+      double yaw = atan2(path[n].y - path[n-1].y, path[n].x - path[n-1].x);
       while (progress < 1.0){
         double t_now = time_in_microseconds(this->get_clock()->now());
         progress = (t_now-path[n-1].t)/(path[n].t - path[n-1].t);

@@ -9,13 +9,22 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(px4_msgs REQUIRED)
+find_package(px4_ros_com REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(tf2_msgs REQUIRED)
 
 add_executable(vehicle_interface src/vehicle_interface.cpp)
+add_executable(vehicle_odometry_bridge src/vehicle_odometry_bridge.cpp)
 target_include_directories(vehicle_interface PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 target_compile_features(vehicle_interface PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+
+target_include_directories(vehicle_odometry_bridge PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+target_compile_features(vehicle_odometry_bridge PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+
 ament_target_dependencies(
   vehicle_interface
   "rclcpp"
@@ -23,7 +32,18 @@ ament_target_dependencies(
   "geometry_msgs"
 )
 
+ament_target_dependencies(
+  vehicle_odometry_bridge
+  "rclcpp"
+  "px4_msgs"
+  "tf2_msgs"
+  "px4_ros_com"
+)
+
 install(TARGETS vehicle_interface
+  DESTINATION lib/${PROJECT_NAME})
+
+install(TARGETS vehicle_odometry_bridge
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)

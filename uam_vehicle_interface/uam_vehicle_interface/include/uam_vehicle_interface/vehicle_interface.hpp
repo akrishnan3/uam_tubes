@@ -23,6 +23,7 @@ class VehicleInterface : public rclcpp::Node
         rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr vehicle_command_pub_;
         rclcpp::Publisher<px4_msgs::msg::OffboardControlMode>::SharedPtr offboard_mode_pub_;
         rclcpp::Publisher<px4_msgs::msg::TrajectorySetpoint>::SharedPtr trajectory_setpoint_pub_;
+        rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr vehicle_pose_pub_;
 
         //-----------------Subscriptions----------------
         rclcpp::Subscription<px4_msgs::msg::VehicleStatus>::SharedPtr vehicle_status_sub_;
@@ -54,4 +55,5 @@ class VehicleInterface : public rclcpp::Node
         void publish_vehicle_command(uint16_t command, float param1, float param2);
         void publish_position_setpoint(float x, float y, float z, float yaw);
         float yaw_from_quaternion(float* q);
+        void publish_vehicle_pose();
 };      
