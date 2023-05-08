@@ -5,6 +5,7 @@ Implementation of Safe Trajectory Tubes NASA Secure Safe Assured Autonomy for Ur
 
 ### 1.Download the latest version of PX4-Autopilot from github and run setup script.
 > git clone git@github.com:PX4/PX4-Autopilot.git
+> 
 > ./PX4-Autopilot/Tools/setup/ubuntu.sh
 
 Follow Instructions on https://docs.px4.io/main/en/sim_gazebo_gz/ to run SITL Simulation
@@ -12,6 +13,7 @@ Follow Instructions on https://docs.px4.io/main/en/sim_gazebo_gz/ to run SITL Si
 ### 2.Prepare The Ros2 workspace clone the following repositories
 px4_msgs, px4_ros_com. (These  directories have been added to .gitignore)
 > git clone git@github.com:PX4/px4_msgs.git
+> 
 > git clone git@github.com:PX4/px4_ros_com.git
 
 ### 3.Install ros_gz bridge. Obtain pose data directly from gazebo sim. simulates MOCAP system
