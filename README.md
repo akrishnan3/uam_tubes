@@ -27,7 +27,7 @@ First run the PX4 Simulation
 Navigate to the PX4-Autopilot Directory Use the following Command
 >PX4_SYS_AUTOSTART=4005 PX4_GZ_MODEL_POSE="-1.06,1.52" PX4_GZ_MODEL=x500_vision ./build/px4_sitl_default/bin/px4
 
-Then from a terminal *NOT VS Code* Run teh following launch file.
+Then from a terminal *NOT VS Code* Run the following launch file.
 Remember to source relevant ROS workspace(s) then run the following command
 
 >ros2 launch uam_operator sitl_launch.py
