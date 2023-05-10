@@ -111,7 +111,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /uav_1/vehicle_interface/position_setpoint
+        Value: /uav_2/vehicle_interface/vehicle_pose
       Value: true
   Enabled: true
   Global Options:
