@@ -45,7 +45,7 @@ class VehicleInterface : public rclcpp::Node
         uint8_t current_nav_state;
         float current_position[3];
         float current_quaternion[4];
-
+        uint8_t mav_id;
 
         // --------------- Helper Functions --------------
         

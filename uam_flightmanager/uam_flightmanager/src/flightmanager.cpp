@@ -19,7 +19,7 @@ FlightManagerServer::FlightManagerServer() : rclcpp::Node("flightmanager")
 
   //---------------------- Publishers --------------------------
   this->position_setpoint_pub_ = rclcpp::create_publisher<geometry_msgs::msg::PoseStamped>(
-    this,"/vehicle_interface/position_setpoint",10);
+    this,"vehicle_interface/position_setpoint",10);
 
 }
 

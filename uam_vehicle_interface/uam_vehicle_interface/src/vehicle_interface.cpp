@@ -10,21 +10,23 @@ VehicleInterface::VehicleInterface() : rclcpp::Node("vehicle_interface")
 
   rclcpp::QoS px4_qos_pub = rclcpp::QoS(rclcpp::KeepLast(10)).best_effort().transient_local();
   rclcpp::QoS px4_qos_sub = rclcpp::QoS(rclcpp::KeepLast(10)).best_effort().durability_volatile();
- 
+  //----------------------- Parameters ------------------------
+  this-> declare_parameter("mav_id", 1);
+
   //----------------------- Publisher --------------------------
   
   vehicle_command_pub_ = this->create_publisher<px4_msgs::msg::VehicleCommand>(
-    "/fmu/in/vehicle_command",
+    "fmu/in/vehicle_command",
     px4_qos_pub
   );
 
   offboard_mode_pub_ = this->create_publisher<px4_msgs::msg::OffboardControlMode>(
-    "/fmu/in/offboard_control_mode",
+    "fmu/in/offboard_control_mode",
     px4_qos_pub
   );
 
   trajectory_setpoint_pub_ = this->create_publisher<px4_msgs::msg::TrajectorySetpoint>(
-    "/fmu/in/trajectory_setpoint",
+    "fmu/in/trajectory_setpoint",
     px4_qos_pub
   );
 
@@ -37,23 +39,24 @@ VehicleInterface::VehicleInterface() : rclcpp::Node("vehicle_interface")
   //------------------------ Subscriptions ------------------------
 
     vehicle_status_sub_ = this->create_subscription<px4_msgs::msg::VehicleStatus>(
-    "/fmu/out/vehicle_status",
+    "fmu/out/vehicle_status",
     px4_qos_sub,
     std::bind(& VehicleInterface::vehicle_status_callback, this, _1)
   );
 
   vehicle_odometry_sub_ = this->create_subscription<px4_msgs::msg::VehicleOdometry>(
-    "/fmu/out/vehicle_odometry",
+    "fmu/out/vehicle_odometry",
     px4_qos_sub,
     std::bind(&VehicleInterface::vehicle_odometry_callback, this, _1)
   );
 
   position_setpoint_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-    "/vehicle_interface/position_setpoint",
+    "vehicle_interface/position_setpoint",
     10,
     std::bind(& VehicleInterface::position_setpoint_callback, this, _1)
   );
 
+  mav_id = this->get_parameter("mav_id").as_int();
 }
 
   void VehicleInterface::vehicle_status_callback(const px4_msgs::msg::VehicleStatus &msg)
@@ -142,7 +145,7 @@ void VehicleInterface::publish_vehicle_command(uint16_t command, float param1, f
 	msg.param1 = param1;
 	msg.param2 = param2;
 	msg.command = command;
-	msg.target_system = 1;
+	msg.target_system = mav_id;
 	msg.target_component = 1;
 	msg.source_system = 1;
 	msg.source_component = 1;

@@ -13,11 +13,11 @@ class VehicleOdometryBridge : public rclcpp::Node
         rclcpp::QoS px4_qos_pub = rclcpp::QoS(rclcpp::KeepLast(10)).best_effort().transient_local();
         VehicleOdometryBridge() : Node("vehicle_odometry_bridge"){
             this->odometry_publisher_ = this->create_publisher<px4_msgs::msg::VehicleOdometry>(
-                "/fmu/in/vehicle_visual_odometry",
+                "fmu/in/vehicle_visual_odometry",
                 px4_qos_pub
             );
             this->odometry_subscription_ = this->create_subscription<tf2_msgs::msg::TFMessage>(
-                "/model/x500_vision_0/pose",
+                "mocap_pose",
                 10,
                 std::bind(& VehicleOdometryBridge::odometry_bridge,this,std::placeholders::_1)
             );

@@ -11,6 +11,7 @@
 
   <depend>rclcpp</depend>
   <depend>rclcpp_action</depend>
+  <depend>rclcpp_components</depend>
   <depend>visualization_msgs</depend>
   <depend>uam_flightmanager_msgs</depend>
 
