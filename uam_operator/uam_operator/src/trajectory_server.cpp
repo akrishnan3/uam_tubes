@@ -1,9 +1,9 @@
-#include "uam_operator/trajectory_server.hpp"
+#include "uam_operator/uam_operator.hpp"
 
 
 using namespace uam_operator;
 
-TubeTrajectoryServer::TubeTrajectoryServer() : rclcpp::Node("trajectory_server")
+TubeTrajectoryServer::TubeTrajectoryServer(const rclcpp::NodeOptions & options) : rclcpp::Node("trajectory_server", options)
 {
 
 using namespace std::chrono_literals;
@@ -12,6 +12,8 @@ using namespace std::chrono_literals;
 std::vector<double> default_obs{0.0};
 std::vector<int> default_path_n{2};
 std::vector<double> default_path{0.0,1.0};
+
+this->declare_parameter("num_vehicles",1);
 
 this->declare_parameter("num_obstacles", 0);
 this->declare_parameter("obstacles_x",default_obs);
@@ -29,87 +31,44 @@ this->declare_parameter("paths_z", default_path);
 //------------------------- Timers ------------------------------
 
 obstacle_pub_timer_ = this->create_wall_timer(5s, std::bind(&TubeTrajectoryServer::publish_vizualization, this));
-send_goal_timer_ = this->create_wall_timer(7s, std::bind(&TubeTrajectoryServer::send_path_goal,this));
-
-//---------------------------Action Clients---------------------
-
-this->path_client_ptr_ = rclcpp_action::create_client<PathToPose>(this,"path_to_pose");
+send_goal_timer_ = this->create_wall_timer(7s, std::bind(&TubeTrajectoryServer::publish_goals,this));
 
 //-------------------------- Publishers ------------------------
+path_pub_ = this->create_publisher<nav_msgs::msg::Path>("/trajectory_server/path",10);
+obstacle_viz_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("/tube_trajectory_server/obstacle_markers",10);
+paths_viz_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("/tube_trajectory_server/path_markers",10);
 
-obstacle_viz_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("tube_trajectory_server/obstacle_markers",10);
-paths_viz_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("tube_trajectory_server/path_markers",10);
-
-RCLCPP_INFO(this->get_logger(),"Launched Node: tube_trajectory_server");
+RCLCPP_INFO(this->get_logger(),"Launched Component: trajectory_server");
 
 }
 
-void TubeTrajectoryServer::send_path_goal()
+void TubeTrajectoryServer::publish_goals()
 {
-    using namespace std::placeholders;
-
     this->send_goal_timer_->cancel();
-
-    if(!this->path_client_ptr_->wait_for_action_server()){
-        RCLCPP_ERROR(this->get_logger(),"Action Server not available after waiting");
-        rclcpp::shutdown();
-    }
 
     int num_paths = this->get_parameter("num_paths").as_int();
     auto paths_n = this->get_parameter("paths_n").as_integer_array();
     auto paths_x = this->get_parameter("paths_x").as_double_array();
     auto paths_y = this->get_parameter("paths_y").as_double_array();
     auto paths_z = this->get_parameter("paths_z").as_double_array();
-
-    auto goal_msg = PathToPose::Goal();
-    goal_msg.start_action = goal_msg.TAKEOFF;
-    goal_msg.end_action = goal_msg.LAND;
-    goal_msg.path.header.frame_id = "map";
-    goal_msg.path.header.stamp = this->get_clock()->now();
-    int t0 = 10+this->get_clock()->now().seconds();
-    for(int i = 0; i<paths_n[0]; i++){
-        geometry_msgs::msg::PoseStamped pose;
-        pose.header.frame_id = "map";
-        pose.header.stamp.sec = t0 + 10 *(i+1);
-        pose.pose.position.x = paths_x[i];
-        pose.pose.position.y = paths_y[i];
-        pose.pose.position.z = paths_z[i];
-        goal_msg.path.poses.push_back(pose);
+    int j = 0;
+    for (int n=0; n<num_paths; n++){
+        nav_msgs::msg::Path msg;
+        msg.header.frame_id = std::to_string(n+1);
+        int t0 = this->get_clock()->now().seconds() + 5;
+        for(int i = 0; i<paths_n[n]; i++){
+            geometry_msgs::msg::PoseStamped pose;
+            pose.header.frame_id = "map";
+            pose.header.stamp.sec = t0 + 5 *(i+1);
+            pose.pose.position.x = paths_x[j+i];
+            pose.pose.position.y = paths_y[j+i];
+            pose.pose.position.z = paths_z[j+i];
+            msg.poses.push_back(pose);
+        }
+        path_pub_->publish(msg);
+        j += paths_n[n];
     }
 
-    auto send_goal_options = rclcpp_action::Client<PathToPose>::SendGoalOptions();
-        send_goal_options.goal_response_callback=
-            std::bind(&TubeTrajectoryServer::goal_response_callback, this, _1);
-        send_goal_options.result_callback=
-            std::bind(&TubeTrajectoryServer::result_callback,this,_1);
-    this->path_client_ptr_->async_send_goal(goal_msg, send_goal_options);
-}
-
-void TubeTrajectoryServer::goal_response_callback(const GoalHandlePathToPose::SharedPtr & goal_handle)
-{
-    if(!goal_handle){
-        RCLCPP_ERROR(this->get_logger(), "Goal was rejected by server");
-    }
-    else{
-        RCLCPP_INFO(this->get_logger(),"Goal Accepted, Waiting for result");
-    }
-}
-void TubeTrajectoryServer::result_callback(const GoalHandlePathToPose::WrappedResult & result)
-{
-    switch (result.code){
-        case rclcpp_action::ResultCode::SUCCEEDED:
-            break;
-        case rclcpp_action::ResultCode::ABORTED:
-            RCLCPP_WARN(this->get_logger(), "Goal was Aborted");
-            return;
-        case rclcpp_action::ResultCode::CANCELED:
-            RCLCPP_WARN(this->get_logger(),"Goal was Camceled");
-            return;
-        default:
-            RCLCPP_ERROR(this->get_logger(),"Unknown result code");
-            return;
-    }
-    RCLCPP_INFO(this->get_logger(),"Goal Returned with success");
 }
 
 void TubeTrajectoryServer::publish_vizualization(){
@@ -211,13 +170,6 @@ void TubeTrajectoryServer::publish_paths()
     RCLCPP_DEBUG(this->get_logger(),"Published Path markers");
 }
 
-
-int main(int argc, char ** argv)
-{
-    rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<TubeTrajectoryServer>());
-    rclcpp::shutdown();
-    return 0;
-}
+RCLCPP_COMPONENTS_REGISTER_NODE(uam_operator::TubeTrajectoryServer)
 
 

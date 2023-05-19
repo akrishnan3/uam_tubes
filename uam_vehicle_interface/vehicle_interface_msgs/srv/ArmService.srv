@@ -1,0 +1,8 @@
+int64 ARM = 9
+int64 DISARM = 45
+int64 command
+
+---
+int64 VEHICLE_ARMED = 1
+int64 VEHICLE_DISARMED = 0
+int64 response

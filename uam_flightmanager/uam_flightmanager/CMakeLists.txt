@@ -11,6 +11,7 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(px4_msgs REQUIRED)
 find_package(uam_flightmanager_msgs REQUIRED)
+find_package(vehicle_interface_msgs REQUIRED)
 
 add_executable(flightmanager src/flightmanager.cpp)
 target_include_directories(flightmanager PUBLIC
@@ -23,6 +24,7 @@ ament_target_dependencies(
   "rclcpp_action"
   "px4_msgs"
   "uam_flightmanager_msgs"
+  "vehicle_interface_msgs"
 )
 
 install(TARGETS flightmanager

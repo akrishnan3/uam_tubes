@@ -4,7 +4,7 @@
 #include <cmath>
 
 #include "rclcpp/rclcpp.hpp"
-
+#include "vehicle_interface_msgs/srv/arm_service.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "px4_msgs/msg/vehicle_command.hpp"
 #include "px4_msgs/msg/offboard_control_mode.hpp"
@@ -30,22 +30,26 @@ class VehicleInterface : public rclcpp::Node
         rclcpp::Subscription<px4_msgs::msg::VehicleOdometry>::SharedPtr vehicle_odometry_sub_;
         rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr position_setpoint_sub_;
         
+        //------------------ Services ------------------
+        rclcpp::Service<vehicle_interface_msgs::srv::ArmService>::SharedPtr arm_service_;
+
         //------------------- Timers --------------------
-            rclcpp::TimerBase::SharedPtr timer_;
+        rclcpp::TimerBase::SharedPtr timer_;
 
         //-------------------Call Backs------------------
 
         void vehicle_status_callback(const px4_msgs::msg::VehicleStatus &msg);
         void vehicle_odometry_callback(const px4_msgs::msg::VehicleOdometry &msg);
         void position_setpoint_callback(const geometry_msgs::msg::PoseStamped &msg);
-
+        void arm_routine(const std::shared_ptr<vehicle_interface_msgs::srv::ArmService::Request> request,
+                        std::shared_ptr<vehicle_interface_msgs::srv::ArmService::Response> response);
         // ----------------- State ----------------------
 
         uint8_t current_arming_state;
         uint8_t current_nav_state;
         float current_position[3];
         float current_quaternion[4];
-
+        uint8_t mav_id;
 
         // --------------- Helper Functions --------------
         

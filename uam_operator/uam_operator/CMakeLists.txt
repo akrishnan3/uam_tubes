@@ -9,24 +9,61 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
+find_package(rclcpp_components REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(uam_flightmanager_msgs REQUIRED)
 
-add_executable(trajectory_server src/trajectory_server.cpp)
-target_include_directories(trajectory_server PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
+include_directories(include)
+
+set(node_plugins "")
+
+add_library(trajectory_server SHARED src/trajectory_server.cpp)
+target_compile_definitions(trajectory_server PRIVATE "COMPOSITION_BUILDING_DLL")
+#target_include_directories(trajectory_server PUBLIC
+#  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+#  $<INSTALL_INTERFACE:include>)
+
 target_compile_features(trajectory_server PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+
 ament_target_dependencies(
   trajectory_server
   "rclcpp"
   "rclcpp_action"
+  "rclcpp_components"
   "visualization_msgs"
   "uam_flightmanager_msgs"
 )
 
-install(TARGETS trajectory_server
-  DESTINATION lib/${PROJECT_NAME})
+rclcpp_components_register_nodes(
+  trajectory_server 
+  "uam_operator::TubeTrajectoryServer"
+  )
+
+set(node_plugins "${node_plugins}uam_operator::TubeTrajectoryServer;$<TARGET_FILE:trajectory_server>\n")
+
+add_library(vehicle_interface SHARED src/vehicle_interface.cpp)
+target_compile_definitions(vehicle_interface PRIVATE "COMPOSITION_BUILDING_DLL")
+
+ament_target_dependencies(
+  vehicle_interface
+  "rclcpp"
+  "rclcpp_action"
+  "rclcpp_components"
+  "visualization_msgs"
+  "uam_flightmanager_msgs"
+)
+
+rclcpp_components_register_nodes(vehicle_interface "uam_operator::VehicleInterface")
+set(node_plugins "${node_plugins}uam_operator::VehicleInterface;$<TARGET_FILE:vehicle_interface>\n")
+
+install(TARGETS
+  trajectory_server
+  vehicle_interface
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

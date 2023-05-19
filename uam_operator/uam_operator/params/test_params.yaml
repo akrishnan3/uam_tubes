@@ -1,0 +1,17 @@
+trajectory_server:
+  ros__parameters:
+    num_obstacles: 1
+    obstacles_x: [0.254]
+    obstacles_y: [0.254]             
+    obstacles_h: [1.524]
+    obstacles_d: [0.508]
+    obstacles_w: [0.508]                   
+
+    num_paths: 1 
+    paths_n: [3]
+    paths_x: [-1.0, 0.0, 0.5]
+
+    paths_y: [1.0, 0.0, -0.5]
+
+    paths_z: [1.0, 1.0, 1.0]
+              

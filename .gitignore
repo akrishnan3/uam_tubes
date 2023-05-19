@@ -32,6 +32,8 @@
 *.app
 
 #Folders
+/vicon_receiver
+/geometric_shapes
 /px4*
 /build
 /install

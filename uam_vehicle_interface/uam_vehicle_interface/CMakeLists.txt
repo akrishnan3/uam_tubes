@@ -12,9 +12,12 @@ find_package(px4_msgs REQUIRED)
 find_package(px4_ros_com REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(tf2_msgs REQUIRED)
+find_package(vehicle_interface_msgs REQUIRED)
+find_package(vicon_receiver REQUIRED)
 
 add_executable(vehicle_interface src/vehicle_interface.cpp)
 add_executable(vehicle_odometry_bridge src/vehicle_odometry_bridge.cpp)
+add_executable(vicon_odometry_bridge src/vicon_odometry_bridge.cpp)
 target_include_directories(vehicle_interface PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
@@ -30,6 +33,7 @@ ament_target_dependencies(
   "rclcpp"
   "px4_msgs"
   "geometry_msgs"
+  "vehicle_interface_msgs"
 )
 
 ament_target_dependencies(
@@ -40,10 +44,22 @@ ament_target_dependencies(
   "px4_ros_com"
 )
 
+ament_target_dependencies(
+  vicon_odometry_bridge
+  "rclcpp"
+  "px4_msgs"
+  "vicon_receiver"
+  "px4_ros_com"
+)
+
+
 install(TARGETS vehicle_interface
   DESTINATION lib/${PROJECT_NAME})
 
 install(TARGETS vehicle_odometry_bridge
+  DESTINATION lib/${PROJECT_NAME})
+
+install(TARGETS vicon_odometry_bridge
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
