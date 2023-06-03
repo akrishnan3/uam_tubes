@@ -7,7 +7,7 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(nav_msgs REQUIRED)
 
 # generate interface
-rosidl_generate_interfaces(${PROJECT_NAME}  DEPENDENCIES nav_msgs)
+rosidl_generate_interfaces(${PROJECT_NAME}  "msg/FlightPlan.msg" DEPENDENCIES nav_msgs)
 
 # 
 ament_export_dependencies(rosidl_default_runtime nav_msgs)

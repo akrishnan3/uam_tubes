@@ -26,6 +26,7 @@ struct waypoint{
 };
 
 
+
 class FlightManagerServer : public rclcpp::Node 
 {
 
@@ -48,6 +49,9 @@ class FlightManagerServer : public rclcpp::Node
 
         rclcpp::Client<vehicle_interface_msgs::srv::ArmService>::SharedPtr arm_service_client_;
 
+        //--------------------- Timer --------------------------
+        rclcpp::TimerBase::SharedPtr loiter_timer_;
+
         //---------- Callback Function prototypes --------------
 
         rclcpp_action::GoalResponse handle_goal(
@@ -65,14 +69,19 @@ class FlightManagerServer : public rclcpp::Node
 
         void vehicle_pose_callback(const geometry_msgs::msg::PoseStamped &msg);
 
+        void send_loiter_pose();
+
         //-------------- Vehicle Action Modes ---------------
 
         bool takeoff_to_altitude(double height, double yaw);
         bool land(double yaw);
+        void turn_to_heading(double desired_yaw, double yaw_rate);
 
         //---------------Helper Function Prototypes-----------
         void publish_setpoint(double x, double y, double z, double yaw);
         double time_in_microseconds(builtin_interfaces::msg::Time t);
+        double yaw_from_quaternion(double* q);
+        
         //---------------------Variables --------------------
         
         int n_waypts;
@@ -80,6 +89,8 @@ class FlightManagerServer : public rclcpp::Node
         std::vector<waypoint> path;
         uint8_t start_action;
         uint8_t end_action;
+        double loiter_position[3];
+        double loiter_yaw;
         double vehicle_position[3];
         double vehicle_quaternion[4];
 

@@ -1,9 +1,9 @@
-#include "uam_operator/uam_operator.hpp"
+#include "uam_operator/preplanned_server.hpp"
 
 
 using namespace uam_operator;
 
-TubeTrajectoryServer::TubeTrajectoryServer(const rclcpp::NodeOptions & options) : rclcpp::Node("trajectory_server", options)
+TrajectoryServer::TrajectoryServer(const rclcpp::NodeOptions & options) : rclcpp::Node("preplanned_server", options)
 {
 
 using namespace std::chrono_literals;
@@ -30,8 +30,8 @@ this->declare_parameter("paths_z", default_path);
 
 //------------------------- Timers ------------------------------
 
-obstacle_pub_timer_ = this->create_wall_timer(5s, std::bind(&TubeTrajectoryServer::publish_vizualization, this));
-send_goal_timer_ = this->create_wall_timer(7s, std::bind(&TubeTrajectoryServer::publish_goals,this));
+obstacle_pub_timer_ = this->create_wall_timer(5s, std::bind(&TrajectoryServer::publish_vizualization, this));
+send_goal_timer_ = this->create_wall_timer(7s, std::bind(&TrajectoryServer::publish_goals,this));
 
 //-------------------------- Publishers ------------------------
 path_pub_ = this->create_publisher<nav_msgs::msg::Path>("/trajectory_server/path",10);
@@ -42,7 +42,7 @@ RCLCPP_INFO(this->get_logger(),"Launched Component: trajectory_server");
 
 }
 
-void TubeTrajectoryServer::publish_goals()
+void TrajectoryServer::publish_goals()
 {
     this->send_goal_timer_->cancel();
 
@@ -71,12 +71,12 @@ void TubeTrajectoryServer::publish_goals()
 
 }
 
-void TubeTrajectoryServer::publish_vizualization(){
+void TrajectoryServer::publish_vizualization(){
     this->publish_obstacles();
     this->publish_paths();
 }
 
-void TubeTrajectoryServer::publish_obstacles()
+void TrajectoryServer::publish_obstacles()
 {
         int nObs = this->get_parameter("num_obstacles").as_int();
         auto obstacles_x = this->get_parameter("obstacles_x").as_double_array();
@@ -115,7 +115,7 @@ void TubeTrajectoryServer::publish_obstacles()
         RCLCPP_DEBUG(this->get_logger(),"Published obstacle markers");
 }
 
-void TubeTrajectoryServer::publish_paths()
+void TrajectoryServer::publish_paths()
 {
 
     int num_paths = this->get_parameter("num_paths").as_int();
@@ -170,6 +170,6 @@ void TubeTrajectoryServer::publish_paths()
     RCLCPP_DEBUG(this->get_logger(),"Published Path markers");
 }
 
-RCLCPP_COMPONENTS_REGISTER_NODE(uam_operator::TubeTrajectoryServer)
+RCLCPP_COMPONENTS_REGISTER_NODE(uam_operator::TrajectoryServer)
 
 

@@ -19,23 +19,30 @@ def generate_launch_description():
         composable_node_descriptions=[
             ComposableNode(
                 package = 'uam_operator',
-                plugin='uam_operator::TubeTrajectoryServer',
-                name = 'trajectory_server',
+                plugin='uam_operator::TubeServer',
+                name = 'tube_server',
                 parameters = [params_file]
             ),
             ComposableNode(
                 package = 'uam_operator',
-                plugin='uam_operator::VehicleInterface',
+                plugin='uam_operator::OperatorInterface',
                 name='operator_vehicle_interface',
                 namespace = "/uav_1",
-                parameters = [{"vehicle_id":"1"}],
+                parameters = [{"vehicle_id":1}],
             ),
             ComposableNode(
                 package = 'uam_operator',
-                plugin='uam_operator::VehicleInterface',
+                plugin='uam_operator::OperatorInterface',
                 name='operator_vehicle_interface',
                 namespace = "/uav_2",
-                parameters = [{"vehicle_id":"2"}],
+                parameters = [{"vehicle_id":2}],
+            ),
+            ComposableNode(
+                package = 'uam_operator',
+                plugin='uam_operator::OperatorInterface',
+                name='operator_vehicle_interface',
+                namespace = "/uav_3",
+                parameters = [{"vehicle_id":3}],
             )
         ],
         output = 'screen'
@@ -59,6 +66,15 @@ def generate_launch_description():
         output='screen'
     )
 
+    flightmanager_node_3 =Node(
+        package = 'uam_flightmanager',
+        name= 'flightmanager',
+        executable='flightmanager',
+        namespace = "/uav_3",
+        #arguments=["--ros-args","--log-level","flightmanager:=debug"],
+        output='screen'
+    )
+
     vehicle_interface_node_1 =Node(
         package = 'uam_vehicle_interface',
         name = 'vehicle_interface',
@@ -74,6 +90,15 @@ def generate_launch_description():
         executable ='vehicle_interface',
         namespace = "/uav_2",
         parameters = [{"mav_id": 3}],
+        #arguments=["--ros-args","--log-level","vehicle_interface:=debug"],
+        output='screen'
+    )
+    vehicle_interface_node_3 =Node(
+        package = 'uam_vehicle_interface',
+        name = 'vehicle_interface',
+        executable ='vehicle_interface',
+        namespace = "/uav_3",
+        parameters = [{"mav_id": 4}],
         #arguments=["--ros-args","--log-level","vehicle_interface:=debug"],
         output='screen'
     )
@@ -98,7 +123,7 @@ def generate_launch_description():
         package='tf2_ros',
         executable='static_transform_publisher',
         arguments = ['--x', '0', '--y', '0', '--z', '0',
-                    '--qx', '1', '--qy', '0', '--qz', '0', '--qw','0',
+                    '--qx', '0.70710678118', '--qy', '0.70710678118', '--qz', '0', '--qw','0',
                     '--frame-id', 'world', '--child-frame-id', 'NED']
     )
 
@@ -114,6 +139,13 @@ def generate_launch_description():
         executable = 'parameter_bridge',
         remappings = [("/model/x500_vision_2/pose","/uav_2/mocap_pose")],
         arguments = ['model/x500_vision_2/pose@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V']    
+    )
+
+    ros_gz_bridge_3 = Node(
+        package = 'ros_gz_bridge',
+        executable = 'parameter_bridge',
+        remappings = [("/model/x500_vision_3/pose","/uav_3/mocap_pose")],
+        arguments = ['model/x500_vision_3/pose@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V']    
     )
 
     vehicle_odom_bridge_1 = Node(
@@ -132,17 +164,29 @@ def generate_launch_description():
         output = 'screen'
     )
 
+    vehicle_odom_bridge_3 = Node(
+        package = 'uam_vehicle_interface',
+        executable = 'vehicle_odometry_bridge',
+        name = 'vehicle_odometry_bridge',
+        namespace = '/uav_3',
+        output = 'screen'
+    )
+
 
     ld = LaunchDescription()
     ld.add_action(ros_gz_bridge_1)
     ld.add_action(ros_gz_bridge_2)
+    ld.add_action(ros_gz_bridge_3)
     ld.add_action(vehicle_odom_bridge_1)
     ld.add_action(vehicle_odom_bridge_2)
+    ld.add_action(vehicle_odom_bridge_3)
     ld.add_action(operator_container)
     ld.add_action(flightmanager_node_1)
     ld.add_action(flightmanager_node_2)
+    ld.add_action(flightmanager_node_3)
     ld.add_action(vehicle_interface_node_1)
     ld.add_action(vehicle_interface_node_2)
+    ld.add_action(vehicle_interface_node_3)
     ld.add_action(rviz2_node)
     ld.add_action(tf2_static_map)
     ld.add_action(tf2_static_NED)
