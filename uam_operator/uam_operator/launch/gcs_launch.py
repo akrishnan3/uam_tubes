@@ -7,7 +7,7 @@ from launch_ros.actions import Node
 vicon_server_ip = '192.168.10.2'
 vicon_buffer_size = 200
 
-number_of_vehicles = 2
+number_of_vehicles = 3
 
 def generate_launch_description():
 
@@ -22,7 +22,7 @@ def generate_launch_description():
     for i in range(number_of_vehicles):
         subject = "/NASA_ULI_" + str(i+1)
         odom_bridge_node.append(Node(
-            package = 'uam_vehicle_interface',
+            package = 'uam_util',
             executable= 'vicon_odometry_bridge',
             output= 'screen',
             namespace='uav_' + str(i+1),

@@ -42,30 +42,6 @@ def generate_launch_description():
         output = 'screen'
     )
 
-    flight_manager_nodes = []
-    vehicle_interface_nodes = []
-    for i in range(number_of_vehicles):
-        NameSpace = 'uav_' + str(i+1),
-        flight_manager_nodes.append(
-            Node(
-                package = 'uam_flightmanager',
-                name= 'flightmanager',
-                executable='flightmanager',
-                namespace = NameSpace,
-                output='screen'
-            )
-        )
-        vehicle_interface_nodes.append(
-            Node(
-                package = 'uam_vehicle_interface',
-                name = 'vehicle_interface',
-                executable ='vehicle_interface',
-                namespace = NameSpace,
-                parameters = [{"mav_id": 1}],
-                output='screen'
-            )
-        )
-
     rviz2_node = Node(
         package='rviz2',
         namespace='',
@@ -94,10 +70,6 @@ def generate_launch_description():
     ld.add_action(tf2_static_NED)
     ld.add_action(tf2_static_map)
     ld.add_action(rviz2_node)
-    for i in range(number_of_vehicles):
-        ld.add_action(vehicle_interface_nodes[i])
-        ld.add_action(flight_manager_nodes[i])
-
     ld.add_action(operator_container)
 
     return ld

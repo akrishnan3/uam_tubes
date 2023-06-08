@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>uam_vehicle_interface</name>
+  <name>uam_util</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
   <maintainer email="krishnan.arjun@gatech.edu">krishnans</maintainer>
@@ -12,7 +12,9 @@
   <depend>rclcpp</depend>
   <depend>px4_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>vehicle_interface_msgs</depend>
+  <depend>tf2_msgs</depend>
+  <depend>vicon_receiver</depend>
+  <depend>px4_ros_com</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
