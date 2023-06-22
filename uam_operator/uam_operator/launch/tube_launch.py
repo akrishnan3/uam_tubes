@@ -6,7 +6,7 @@ from launch_ros.actions import Node
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 
-number_of_vehicles = 2
+number_of_vehicles = 3
 
 def generate_launch_description():
 

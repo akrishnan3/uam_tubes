@@ -50,7 +50,10 @@ rclcpp_action::GoalResponse FlightManagerServer::handle_goal(
 
   RCLCPP_INFO(this->get_logger(),"Recieved goal request");
   n_waypts = goal->path.poses.size();
-  time_t0 = goal->path.header.stamp.sec;
+
+  int t_offset = time_in_microseconds(this->get_clock()->now())-time_in_microseconds(goal->path.header.stamp);
+
+  time_t0 = time_in_microseconds(goal->path.header.stamp) + t_offset;
   start_action = goal->start_action;
   end_action = goal->end_action;
   //RCLCPP_DEBUG(this->get_logger(),"goal->path.header.stamp.sec = %i",time_t0);
@@ -58,7 +61,7 @@ rclcpp_action::GoalResponse FlightManagerServer::handle_goal(
     //RCLCPP_DEBUG(this->get_logger(),"Recieved %d waypoints", n_waypts);
   for (int n = 0; n<n_waypts; n++){
     waypoint waypt;
-    waypt.t = time_in_microseconds(goal->path.poses[n].header.stamp);
+    waypt.t = time_in_microseconds(goal->path.poses[n].header.stamp) + t_offset;
     //RCLCPP_DEBUG(this->get_logger(),"path[%i].t = %f", n, waypt.t);
     // Change from ENU to NED
     waypt.x = goal->path.poses[n].pose.position.y;
@@ -126,7 +129,8 @@ void FlightManagerServer::execute_goal(const std::shared_ptr<GoalHandlePathToPos
     loiter_position[2] = path[0].z;
     turn_to_heading(yaw,1.0);
 
-  // Fly Path  
+  // Fly Path
+  
   for(int n = 1; n < n_waypts; n++){
     double progress = 0.0;
      yaw = atan2(path[n].y - path[n-1].y, path[n].x - path[n-1].x);

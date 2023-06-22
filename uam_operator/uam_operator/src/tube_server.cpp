@@ -42,17 +42,19 @@ TubeServer::TubeServer(const rclcpp::NodeOptions & options) : rclcpp::Node("tube
     this->declare_parameter("bounds_y", default_bounds_y);
     this->declare_parameter("bounds_z", default_bounds_z);
 
-    this->declare_parameter("num_total_segments", 7);
+    this->declare_parameter("num_total_segments", 5);
 
     //-------------------- Timers ------------------------
     obstacle_pub_timer_ = this->create_wall_timer(
-        1s, 
+        std::chrono::milliseconds(1100), 
         std::bind(&TubeServer::publish_obstacles, this)
     );
     path_timer_ = this->create_wall_timer(
         15s,
         std::bind(&TubeServer::generate_paths, this)
     );
+
+    re.seed(11);
 
     //------------------ Publishers ----------------------
     obstacle_viz_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("trajectory_server/obstacle_markers",10);
@@ -82,32 +84,63 @@ void TubeServer::add_random_path(int id)
     auto spring_const = this->get_parameter("spring_const").as_double();
     auto damp_const = this->get_parameter("damp_const").as_double();
 
-    auto start = vehicle_positions[id];
-    auto end = Eigen::Vector3d(start);
+    Eigen::Vector3d start = vehicle_positions[id];
+    Eigen::Vector3d end;
     bool point_inside_obstacle = false;
-    double dist = 0.0;
-    
-
-    while(dist< 1.5 || dist > 5 || point_inside_obstacle){
+    double dist;
+    std::shared_ptr<trajectory> path;
+    for(int i=0; i<10; i++){
         
-        end = Eigen::Vector3d(
-            bounds_x_min + unif(this->re)*(bounds_x_max - bounds_x_min),
-            bounds_y_min + unif(this->re)*(bounds_y_max - bounds_y_min),
-            bounds_z_min + unif(this->re)*(bounds_z_max - bounds_z_min)
-        );
+        if (vehicle_status[id] == vehicle_states::landing_requested){
+            double approach_z = bounds_z_min + unif(this->re)*(bounds_z_max - bounds_z_min);
+            end = Eigen::Vector3d(vertiports_x[id], vertiports_y[id], approach_z);
+        } else {
+            end = start;
+        
+            dist = (end-start).norm();
+            point_inside_obstacle = false;
 
-        dist = (end-start).norm();
+            while(dist< 2.5 || dist > 5 || point_inside_obstacle){
+                
+                end = Eigen::Vector3d(
+                    bounds_x_min + unif(this->re)*(bounds_x_max - bounds_x_min),
+                    bounds_y_min + unif(this->re)*(bounds_y_max - bounds_y_min),
+                    bounds_z_min + unif(this->re)*(bounds_z_max - bounds_z_min)
+                );
 
-        point_inside_obstacle = false;
-        for(auto obs: obstacles)
-        {
-             if(obs->check_inclusion(end))
-             {
-                point_inside_obstacle = true;
-             }
+                dist = (end-start).norm();
+
+                point_inside_obstacle = false;
+                for(auto obs: obstacles)
+                {
+                    if(obs->check_inclusion(end))
+                    {
+                        point_inside_obstacle = true;
+                    }
+                }
+            }
+
         }
 
+        int n_beads = int((end-start).norm()/0.5);
+        if (n_beads < 4)
+        {
+            n_beads = 4;
+        }
+        
+        path = std::make_shared<trajectory>(start, end, this->obstacles, n_beads, spring_const, damp_const, F_star,alpha,d_star);
+        path->converge_trajectory();
+        if(path->check_trajectory()){
+            break;
+        }
     }
+
+    path->set_color(0.0, 1.0 - double(id)/num_vehicles, double(id)/num_vehicles);
+
+    RCLCPP_INFO(this->get_logger(),"Generate Path for vehicle: %i from:[%3.2f, %3.2f, %3.2f] to: [%3.2f, %3.2f, %3.2f] ", id, start[0], start[1], start[2], end[0], end[1], end[2]);
+
+    obstacles.push_back(path);
+    vehicle_positions[id]=end;
 
     double t_padd = 0.0;
     uam_operator_msgs::msg::FlightPlan flight_plan_msg;
@@ -116,7 +149,7 @@ void TubeServer::add_random_path(int id)
         case vehicle_states::ready_for_takeoff: 
             flight_plan_msg.start_command = flight_plan_msg.TAKEOFF;
             flight_plan_msg.end_command = flight_plan_msg.LOITER;
-            t_padd = 7.0;
+            t_padd = 10.0;
             vehicle_status[id] = vehicle_states::flying;
             break;
         case vehicle_states::flying:
@@ -129,24 +162,10 @@ void TubeServer::add_random_path(int id)
             flight_plan_msg.start_command = flight_plan_msg.LOITER;
             flight_plan_msg.end_command = flight_plan_msg.LAND;
             t_padd = 5.0;
-            end = Eigen::Vector3d(vertiports_x[id], vertiports_y[id], 1.5);
             vehicle_status[id] = vehicle_states::ready_for_takeoff;
             break;
     }
 
-    int n_beads = int((end-start).norm()/0.5);
-    if (n_beads < 4)
-    {
-        n_beads = 4;
-    }
-
-    RCLCPP_INFO(this->get_logger(),"Generate Path for vehicle: %i from:[%3.2f, %3.2f, %3.2f] to: [%3.2f, %3.2f, %3.2f] ", id, start[0], start[1], start[2], end[0], end[1], end[2]);
-    auto path = std::make_shared<trajectory>(start, end, this->obstacles, n_beads, spring_const, damp_const, F_star,alpha,d_star);
-    path->converge_trajectory();
-    path->set_color(0.0, 1.0 - double(id)/num_vehicles, double(id)/num_vehicles);
-
-    obstacles.push_back(path);
-    vehicle_positions[id]=end;
     auto t0 = this->get_clock()->now().seconds()+ t_padd;
     path->constructPathMsgFromObject(flight_plan_msg.waypts,t0,0.25);
     flight_plan_msg.vehicle_id = uint8_t(id+1);
