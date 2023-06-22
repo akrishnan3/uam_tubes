@@ -51,9 +51,7 @@ rclcpp_action::GoalResponse FlightManagerServer::handle_goal(
   RCLCPP_INFO(this->get_logger(),"Recieved goal request");
   n_waypts = goal->path.poses.size();
 
-  int t_offset = time_in_microseconds(this->get_clock()->now())-time_in_microseconds(goal->path.header.stamp);
-
-  time_t0 = time_in_microseconds(goal->path.header.stamp) + t_offset;
+  time_t0 = goal->path.header.stamp.sec;
   start_action = goal->start_action;
   end_action = goal->end_action;
   //RCLCPP_DEBUG(this->get_logger(),"goal->path.header.stamp.sec = %i",time_t0);
@@ -61,7 +59,7 @@ rclcpp_action::GoalResponse FlightManagerServer::handle_goal(
     //RCLCPP_DEBUG(this->get_logger(),"Recieved %d waypoints", n_waypts);
   for (int n = 0; n<n_waypts; n++){
     waypoint waypt;
-    waypt.t = time_in_microseconds(goal->path.poses[n].header.stamp) + t_offset;
+    waypt.t = time_since_start(goal->path.poses[n].header.stamp);
     //RCLCPP_DEBUG(this->get_logger(),"path[%i].t = %f", n, waypt.t);
     // Change from ENU to NED
     waypt.x = goal->path.poses[n].pose.position.y;
@@ -69,6 +67,7 @@ rclcpp_action::GoalResponse FlightManagerServer::handle_goal(
     waypt.z = -goal->path.poses[n].pose.position.z;
     path.push_back(waypt);
   }
+  time_t0 = this->get_clock()->now().seconds();
   (void)uuid;
   return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
 }
@@ -135,7 +134,7 @@ void FlightManagerServer::execute_goal(const std::shared_ptr<GoalHandlePathToPos
     double progress = 0.0;
      yaw = atan2(path[n].y - path[n-1].y, path[n].x - path[n-1].x);
     while (progress < 1.0){
-      double t_now = time_in_microseconds(this->get_clock()->now());
+      double t_now = time_since_start(this->get_clock()->now());
       progress = (t_now-path[n-1].t)/(path[n].t - path[n-1].t);
       
       if(progress >= 0.0 && progress <=1){
@@ -293,7 +292,7 @@ void FlightManagerServer::publish_setpoint(double x, double y, double z, double 
   position_setpoint_pub_->publish(msg);
 }
 
-double FlightManagerServer::time_in_microseconds(builtin_interfaces::msg::Time t)
+double FlightManagerServer::time_since_start(builtin_interfaces::msg::Time t)
 {
   return double(t.sec-time_t0)*1e6 + double(t.nanosec)/1000.0;
 }

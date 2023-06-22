@@ -79,7 +79,7 @@ class FlightManagerServer : public rclcpp::Node
 
         //---------------Helper Function Prototypes-----------
         void publish_setpoint(double x, double y, double z, double yaw);
-        double time_in_microseconds(builtin_interfaces::msg::Time t);
+        double time_since_start(builtin_interfaces::msg::Time t);
         double yaw_from_quaternion(double* q);
         
         //---------------------Variables --------------------
